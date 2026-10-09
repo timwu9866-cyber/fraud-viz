@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,">
+<script>(function(){var t;try{t=localStorage.getItem('sec-theme')}catch(e){}if(t!=='light'&&t!=='dark'){try{t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}catch(e){t='dark'}}document.documentElement.setAttribute('data-theme',t)})();</script>
+<title>涉诈事件可视化 · 场景一 暗链收网</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">◈ 涉诈事件可视化 <small>3D 动效演示 · 反诈取证</small></div>
+    <div class="hstat" id="total"></div>
+    <div class="grow"></div>
+    <button id="bTheme" type="button" title="当前夜间,点击切换到日间" aria-pressed="false">☾ 夜间</button>
+    <label class="bl" title="全局辉光强度,默认 20%">辉光 <input id="bloom" autocomplete="off" type="range" min="0" max="100" step="1" value="20"><span id="bloomV">20%</span></label>
+    <button id="bHome" title="恢复默认视角(镜头角度固定,可平移/缩放)">⌂ 视角</button>
+  </header>
+  <main>
+    <aside id="left">
+      <div id="scn"></div>
+    </aside>
+    <section id="center">
+      <div id="stage"><canvas id="cv"></canvas>
+        <div id="title"></div><div id="legend"><span><i class="atk"></i>涉诈/恶意</span><span><i class="def"></i>取证/溯源</span><span><i class="ok"></i>正常流量</span><span><i class="warn"></i>线索/数据</span></div>
+        <div id="hint">拖拽=平移 · 滚轮/双指=缩放 · 镜头角度固定</div><div id="cap"></div><div id="nodata"></div><div id="stnote"></div></div>
+      <div id="ctl">
+        <button id="bPlay">❚❚ 暂停</button>
+        <button id="bReplay">↻ 重播</button>
+        <div id="scrubWrap"><input id="scrub" autocomplete="off" type="range" min="0" max="1000" step="1" value="0"><div id="ticks"></div></div>
+        <div id="tm">0.0 / 0.0 秒</div>
+        <label class="bl">速度 <select id="speed" autocomplete="off"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option></select></label>
+      </div>
+    </section>
+    <aside id="detail"></aside>
+  </main>
+</div>
+<script src="lib/three.bundle.js"></script>
+<script src="js/core.js"></script>
+<script src="js/prims.js"></script>
+<script src="js/fraud-prims.js"></script>
+<script src="js/stage.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
