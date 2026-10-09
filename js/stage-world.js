@@ -4,7 +4,7 @@
 const S = window.SEC, T = S.T, V3 = S.V3, { COL, col, clamp, sm, eo, rng, U, Glow, Node, PR, Ctx, holoMat, addMat, lineMat, textSprite, AZ } = S;
 const W = window.FRAUD_WORLD;
   // 大场景节点多,整体降一档辉光避免发白
-  if (S.TUNE) { S.TUNE.glowA = 0.24; S.TUNE.glowS = 0.62; }
+  if (S.TUNE) { S.TUNE.glowA = 0.22; S.TUNE.glowS = 0.6; }
 const lerp = (a, b, k) => a + (b - a) * k;
 const easeIO = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
@@ -17,7 +17,7 @@ function Stage(canvas, host) {
   });
   if (!renderer) throw lastErr || new Error('WebGL 不可用');
   self.safe = /[?&]safe=1/.test(location.search); self.lost = false;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setClearColor(0x0b1020, 1); renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.76;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setClearColor(0x0b1020, 1);
   const scene = new T.Scene(); scene.background = new T.Color('#0b1020');
   const cam = new T.PerspectiveCamera(46, 16 / 9, 0.5, 4000);
 
@@ -42,12 +42,12 @@ function Stage(canvas, host) {
   const grid = new T.Mesh(new T.PlaneGeometry(180, 180), new T.ShaderMaterial({
     uniforms: { uDay: { value: 0 } }, transparent: true, depthWrite: false, blending: T.AdditiveBlending,
     vertexShader: 'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float d=length(p)*0.016;float f=exp(-d*d*1.6);if(uDay>0.5){float a=clamp((l*.6+l2*.9)*f,0.,.8);gl_FragColor=vec4(vec3(.27,.32,.39),a);}else{gl_FragColor=vec4(vec3(.05,.17,.26)*(l*.07+l2*.17)*f+vec3(0.,.04,.06)*f*.02,1.);}}',
+    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float d=length(p)*0.016;float f=exp(-d*d*1.6);if(uDay>0.5){float a=clamp((l*.6+l2*.9)*f,0.,.8);gl_FragColor=vec4(vec3(.27,.32,.39),a);}else{gl_FragColor=vec4(vec3(.04,.13,.2)*(l*.05+l2*.13)*f,1.);}}',
   }));
   grid.rotation.x = -Math.PI / 2; grid.position.y = -0.02; scene.add(grid);
 
   const glow = new Glow(26000); scene.add(glow.points);
-  const ambient = []; { const r = rng(7); for (let i = 0; i < 32; i++) ambient.push([(r() - .5) * 85, r() * 6, (r() - .5) * 85, r() * 6.28, 0.4 + r() * 0.8]); }
+  const ambient = []; { const r = rng(7); for (let i = 0; i < 14; i++) ambient.push([(r() - .5) * 80, r() * 5, (r() - .5) * 80, r() * 6.28, 0.4 + r() * 0.8]); }
 
   // ---- 阵营地台 + 名称 ----
   const campLabels = [];
@@ -172,7 +172,7 @@ function Stage(canvas, host) {
     for (const o of [coreEdge, shellEdge]) o.material.color.copy(col('atk'));
     glow.add(0, 3.4, 0, 1.4 * pulse, col('atk'), 0.5);
     // 节点 reset + 事件 + apply
-    nodes.forEach(n => n.reset());
+    nodes.forEach(n => { n.reset(); n.shellA = 0; });
     for (let i = 0; i < ups.length; i++) { try { ups[i](t); } catch (err) { self.errors.push((ev ? ev.id : '') + '@' + t.toFixed(2) + ':' + err.message); ups[i] = () => {}; } }
     nodes.forEach(n => n.apply(t));
     glow.flush();
