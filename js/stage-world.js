@@ -81,11 +81,9 @@ function Stage(canvas, host) {
 
   // ---- 世界节点 ----
   const nodeMap = {}; const nodes = [];
-  W.NODES.forEach(nd => { const n = new Node({ label: nd.label, kind: nd.kind, color: nd.c, x: nd.x, z: nd.z, scale: nd.scale, dir: 1 }); n.add(scene); nodeMap[nd.id] = n; n._def = nd; nodes.push(n);
+  W.NODES.forEach(nd => { const n = new Node({ label: nd.label, kind: nd.kind, color: nd.c, x: nd.x, z: nd.z, scale: (nd.scale || 1) * 1.45, dir: 1 }); n.add(scene); nodeMap[nd.id] = n; n._def = nd; nodes.push(n);
     // 大场景节点多,收一档各节点的发光材质,避免叠加泛白
-    n.slabMats.forEach(m => { m.uniforms.uGlow.value *= 0.6; m.uniforms.uRim.value *= 0.7; m.uniforms.uScan.value *= 0.5; });
-    n.shellMat.uniforms.uGlow.value *= 0.45; n.shellMat.uniforms.uRim.value *= 0.6; n.shellMat.uniforms.uScan.value *= 0.4;
-    n.coreMat.uniforms.uGlow.value *= 0.7; });
+  });
   function resolve(id) { if (id === 'core') return coreProxy; return nodeMap[id]; }
 
   // ---- 后处理 ----
@@ -172,7 +170,7 @@ function Stage(canvas, host) {
     for (const o of [coreEdge, shellEdge]) o.material.color.copy(col('atk'));
     glow.add(0, 3.4, 0, 1.4 * pulse, col('atk'), 0.5);
     // 节点 reset + 事件 + apply
-    nodes.forEach(n => { n.reset(); n.shellA = 0; });
+    nodes.forEach(n => n.reset());
     for (let i = 0; i < ups.length; i++) { try { ups[i](t); } catch (err) { self.errors.push((ev ? ev.id : '') + '@' + t.toFixed(2) + ':' + err.message); ups[i] = () => {}; } }
     nodes.forEach(n => n.apply(t));
     glow.flush();
