@@ -17,7 +17,7 @@ function Stage(canvas, host) {
   });
   if (!renderer) throw lastErr || new Error('WebGL 不可用');
   self.safe = /[?&]safe=1/.test(location.search); self.lost = false;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setClearColor(0x0b1020, 1);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setClearColor(0x0b1020, 1); renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.82;
   const scene = new T.Scene(); scene.background = new T.Color('#0b1020');
   const cam = new T.PerspectiveCamera(46, 16 / 9, 0.5, 4000);
 
@@ -42,19 +42,19 @@ function Stage(canvas, host) {
   const grid = new T.Mesh(new T.PlaneGeometry(180, 180), new T.ShaderMaterial({
     uniforms: { uDay: { value: 0 } }, transparent: true, depthWrite: false, blending: T.AdditiveBlending,
     vertexShader: 'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float d=length(p)*0.016;float f=exp(-d*d*1.6);if(uDay>0.5){float a=clamp((l*.6+l2*.9)*f,0.,.8);gl_FragColor=vec4(vec3(.27,.32,.39),a);}else{gl_FragColor=vec4(vec3(.08,.26,.38)*(l*.13+l2*.3)*f+vec3(0.,.07,.1)*f*.03,1.);}}',
+    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float d=length(p)*0.016;float f=exp(-d*d*1.6);if(uDay>0.5){float a=clamp((l*.6+l2*.9)*f,0.,.8);gl_FragColor=vec4(vec3(.27,.32,.39),a);}else{gl_FragColor=vec4(vec3(.06,.2,.3)*(l*.09+l2*.22)*f+vec3(0.,.05,.08)*f*.02,1.);}}',
   }));
   grid.rotation.x = -Math.PI / 2; grid.position.y = -0.02; scene.add(grid);
 
   const glow = new Glow(26000); scene.add(glow.points);
-  const ambient = []; { const r = rng(7); for (let i = 0; i < 48; i++) ambient.push([(r() - .5) * 88, r() * 7, (r() - .5) * 88, r() * 6.28, 0.4 + r() * 0.8]); }
+  const ambient = []; { const r = rng(7); for (let i = 0; i < 32; i++) ambient.push([(r() - .5) * 85, r() * 6, (r() - .5) * 85, r() * 6.28, 0.4 + r() * 0.8]); }
 
   // ---- 阵营地台 + 名称 ----
   const campLabels = [];
   W.CAMPS.forEach((camp, ci) => {
     const p = camp.pos; const g = new T.Group(); g.position.set(p.x, 0, p.z);
-    const ring = new T.Mesh(new T.RingGeometry(10.5, 11.0, 64), addMat(COL.info, 0.06, T.DoubleSide)); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.01; g.add(ring);
-    const disk = new T.Mesh(new T.CircleGeometry(10.5, 48), addMat(COL.info, 0.008, T.DoubleSide)); disk.rotation.x = -Math.PI / 2; disk.position.y = 0.005; g.add(disk);
+    const ring = new T.Mesh(new T.RingGeometry(10.5, 11.0, 64), addMat(COL.info, 0.045, T.DoubleSide)); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.01; g.add(ring);
+    const disk = new T.Mesh(new T.CircleGeometry(10.5, 48), addMat(COL.info, 0.004, T.DoubleSide)); disk.rotation.x = -Math.PI / 2; disk.position.y = 0.005; g.add(disk);
     scene.add(g);
     const lab = textSprite(camp.name, { h: 1.6, color: '#9fb6e6', bg: 'rgba(9,14,32,0.6)' }); lab.position.set(p.x, 0.2, p.z + 12.5); scene.add(lab); campLabels.push({ lab, baseC: '#9fb6e6' });
   });
@@ -80,13 +80,17 @@ function Stage(canvas, host) {
 
   // ---- 世界节点 ----
   const nodeMap = {}; const nodes = [];
-  W.NODES.forEach(nd => { const n = new Node({ label: nd.label, kind: nd.kind, color: nd.c, x: nd.x, z: nd.z, scale: nd.scale, dir: 1 }); n.add(scene); nodeMap[nd.id] = n; n._def = nd; nodes.push(n); });
+  W.NODES.forEach(nd => { const n = new Node({ label: nd.label, kind: nd.kind, color: nd.c, x: nd.x, z: nd.z, scale: nd.scale, dir: 1 }); n.add(scene); nodeMap[nd.id] = n; n._def = nd; nodes.push(n);
+    // 大场景节点多,收一档各节点的发光材质,避免叠加泛白
+    n.slabMats.forEach(m => { m.uniforms.uGlow.value *= 0.6; m.uniforms.uRim.value *= 0.7; m.uniforms.uScan.value *= 0.5; });
+    n.shellMat.uniforms.uGlow.value *= 0.45; n.shellMat.uniforms.uRim.value *= 0.6; n.shellMat.uniforms.uScan.value *= 0.4;
+    n.coreMat.uniforms.uGlow.value *= 0.7; });
   function resolve(id) { if (id === 'core') return coreProxy; return nodeMap[id]; }
 
   // ---- 后处理 ----
   let composer = null, bloom = { strength: 0.2, threshold: 0.78 };
-  try { composer = new T.EffectComposer(renderer); composer.addPass(new T.RenderPass(scene, cam)); bloom = new T.UnrealBloomPass(new T.Vector2(960, 540), 0.10, 0.55, 0.9); composer.addPass(bloom); } catch (e) { console.error(e); composer = null; self.safe = true; }
-  self.bloomUser = 0.10; self.bloomNight = 0.9;
+  try { composer = new T.EffectComposer(renderer); composer.addPass(new T.RenderPass(scene, cam)); bloom = new T.UnrealBloomPass(new T.Vector2(960, 540), 0.045, 0.3, 0.95); composer.addPass(bloom); } catch (e) { console.error(e); composer = null; self.safe = true; }
+  self.bloomUser = 0.045; self.bloomNight = 0.95;
   self.setBloom = v => { self.bloomUser = v; bloom.strength = (S.day ? 0.5 : 1) * v; };
   self.applyTheme = function (theme) {
     const day = theme === 'light'; S.day = day; const pal = S.paintPalette(day ? 'light' : 'dark');
@@ -156,7 +160,7 @@ function Stage(canvas, host) {
   self.draw = function (t) {
     if (self.lost) return; const _n = performance.now(), _dt = Math.min(0.05, (_n - lastNow) / 1000); lastNow = _n; updateTween(); if (self.idle && !drag && !tw.on) { camS.az += _dt * 0.12; place(); } U.uTime.value = t; glow.clear();
     // 环境粒子
-    ambient.forEach(a => glow.add(a[0] + Math.sin(t * .2 * a[4] + a[3]) * .8, a[1] + Math.sin(t * .15 * a[4]) * .4, a[2] + Math.cos(t * .18 * a[4] + a[3]) * .6, 0.045, COL.def, S.day ? 0.06 : 0.09));
+    ambient.forEach(a => glow.add(a[0] + Math.sin(t * .2 * a[4] + a[3]) * .8, a[1] + Math.sin(t * .15 * a[4]) * .4, a[2] + Math.cos(t * .18 * a[4] + a[3]) * .6, 0.04, COL.def, S.day ? 0.05 : 0.06));
     // 核心动效
     coreMesh.rotation.y = t * 0.5; coreMesh.rotation.x = t * 0.25; shell.rotation.y = -t * 0.3;
     const pulse = 1 + 0.08 * Math.sin(t * 3); coreMesh.scale.setScalar(pulse);
