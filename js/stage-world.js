@@ -4,7 +4,7 @@
 const S = window.SEC, T = S.T, V3 = S.V3, { COL, col, clamp, sm, eo, rng, U, Glow, Node, PR, Ctx, holoMat, addMat, lineMat, textSprite, AZ } = S;
 const W = window.FRAUD_WORLD;
   // 大场景节点多,整体降一档辉光避免发白
-  if (S.TUNE) { S.TUNE.glowA = 0.4; S.TUNE.glowS = 0.72; }
+  if (S.TUNE) { S.TUNE.glowA = 0.3; S.TUNE.glowS = 0.66; }
 const lerp = (a, b, k) => a + (b - a) * k;
 const easeIO = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
@@ -42,19 +42,19 @@ function Stage(canvas, host) {
   const grid = new T.Mesh(new T.PlaneGeometry(180, 180), new T.ShaderMaterial({
     uniforms: { uDay: { value: 0 } }, transparent: true, depthWrite: false, blending: T.AdditiveBlending,
     vertexShader: 'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float d=length(p)*0.016;float f=exp(-d*d*1.6);if(uDay>0.5){float a=clamp((l*.6+l2*.9)*f,0.,.8);gl_FragColor=vec4(vec3(.27,.32,.39),a);}else{gl_FragColor=vec4(vec3(.1,.34,.48)*(l*.18+l2*.4)*f+vec3(0.,.09,.13)*f*.04,1.);}}',
+    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float d=length(p)*0.016;float f=exp(-d*d*1.6);if(uDay>0.5){float a=clamp((l*.6+l2*.9)*f,0.,.8);gl_FragColor=vec4(vec3(.27,.32,.39),a);}else{gl_FragColor=vec4(vec3(.08,.26,.38)*(l*.13+l2*.3)*f+vec3(0.,.07,.1)*f*.03,1.);}}',
   }));
   grid.rotation.x = -Math.PI / 2; grid.position.y = -0.02; scene.add(grid);
 
   const glow = new Glow(26000); scene.add(glow.points);
-  const ambient = []; { const r = rng(7); for (let i = 0; i < 70; i++) ambient.push([(r() - .5) * 90, r() * 8, (r() - .5) * 90, r() * 6.28, 0.4 + r() * 0.8]); }
+  const ambient = []; { const r = rng(7); for (let i = 0; i < 48; i++) ambient.push([(r() - .5) * 88, r() * 7, (r() - .5) * 88, r() * 6.28, 0.4 + r() * 0.8]); }
 
   // ---- 阵营地台 + 名称 ----
   const campLabels = [];
   W.CAMPS.forEach((camp, ci) => {
     const p = camp.pos; const g = new T.Group(); g.position.set(p.x, 0, p.z);
-    const ring = new T.Mesh(new T.RingGeometry(10.5, 11.0, 64), addMat(COL.info, 0.10, T.DoubleSide)); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.01; g.add(ring);
-    const disk = new T.Mesh(new T.CircleGeometry(10.5, 48), addMat(COL.info, 0.015, T.DoubleSide)); disk.rotation.x = -Math.PI / 2; disk.position.y = 0.005; g.add(disk);
+    const ring = new T.Mesh(new T.RingGeometry(10.5, 11.0, 64), addMat(COL.info, 0.06, T.DoubleSide)); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.01; g.add(ring);
+    const disk = new T.Mesh(new T.CircleGeometry(10.5, 48), addMat(COL.info, 0.008, T.DoubleSide)); disk.rotation.x = -Math.PI / 2; disk.position.y = 0.005; g.add(disk);
     scene.add(g);
     const lab = textSprite(camp.name, { h: 1.6, color: '#9fb6e6', bg: 'rgba(9,14,32,0.6)' }); lab.position.set(p.x, 0.2, p.z + 12.5); scene.add(lab); campLabels.push({ lab, baseC: '#9fb6e6' });
   });
@@ -85,8 +85,8 @@ function Stage(canvas, host) {
 
   // ---- 后处理 ----
   let composer = null, bloom = { strength: 0.2, threshold: 0.78 };
-  try { composer = new T.EffectComposer(renderer); composer.addPass(new T.RenderPass(scene, cam)); bloom = new T.UnrealBloomPass(new T.Vector2(960, 540), 0.16, 0.7, 0.86); composer.addPass(bloom); } catch (e) { console.error(e); composer = null; self.safe = true; }
-  self.bloomUser = 0.16; self.bloomNight = 0.86;
+  try { composer = new T.EffectComposer(renderer); composer.addPass(new T.RenderPass(scene, cam)); bloom = new T.UnrealBloomPass(new T.Vector2(960, 540), 0.10, 0.55, 0.9); composer.addPass(bloom); } catch (e) { console.error(e); composer = null; self.safe = true; }
+  self.bloomUser = 0.10; self.bloomNight = 0.9;
   self.setBloom = v => { self.bloomUser = v; bloom.strength = (S.day ? 0.5 : 1) * v; };
   self.applyTheme = function (theme) {
     const day = theme === 'light'; S.day = day; const pal = S.paintPalette(day ? 'light' : 'dark');
@@ -102,27 +102,23 @@ function Stage(canvas, host) {
   new ResizeObserver(resize).observe(host); window.addEventListener('resize', resize);
 
   // ---- 交互:拖拽旋转、滚轮缩放(事件播放时自动运镜会接管) ----
-  let drag = null;
+  let drag = null; self.idle = true; let lastNow = performance.now();
   canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); drag = { x: e.clientX, y: e.clientY }; tw.on = false; });
   canvas.addEventListener('pointermove', e => { if (!drag) return; camS.az -= (e.clientX - drag.x) * 0.006; camS.el = clamp(camS.el + (e.clientY - drag.y) * 0.005, 0.12, 1.45); drag.x = e.clientX; drag.y = e.clientY; place(); self.dirty = true; });
   const up = e => { drag = null; }; canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   canvas.addEventListener('wheel', e => { e.preventDefault(); camS.dist = clamp(camS.dist * Math.exp(e.deltaY * 0.0012), 26, 160); tw.on = false; place(); self.dirty = true; }, { passive: false });
-  self.resetView = () => { tweenTo({ az: 0, el: 26 * Math.PI / 180, dist: 96, target: new V3(0, 2, 0) }, 1.1); };
+  self.resetView = () => { self.idle = true; tweenTo({ az: camS.az, el: 24 * Math.PI / 180, dist: 100, target: new V3(0, 3.0, 0) }, 1.1); };
   self.overview = self.resetView;
 
   // ---- 事件加载 ----
   let ctx = null, ups = [], ev = null;
   function framing(from, to) {
+    // 中央核心始终居中:相机绕中心,朝向激活阵营,不聚焦/不拉近到节点对
     const a = resolve(from).center(), b = resolve(to).center();
     const pair = a.clone().add(b).multiplyScalar(0.5);
-    // 目标点:偏向这对节点,同时略带中心,保证中央攻击源始终在画面里
-    const coreC = new V3(0, 3.2, 0);
-    const target = pair.clone().lerp(coreC, 0.32); target.y = 3.2;
-    // 统一成偏低、略带 3/4 的攻击视角
-    const dirOut = new V3(target.x, 0, target.z); if (dirOut.length() < 1) dirOut.set(0, 0, 1); dirOut.normalize();
-    const az = Math.atan2(dirOut.x, dirOut.z) + 22 * Math.PI / 180;
-    const sep = a.distanceTo(b); const dist = clamp(46 + sep * 0.55, 50, 74);
-    return { az, el: 18.5 * Math.PI / 180, dist, target };
+    const dirOut = new V3(pair.x, 0, pair.z); if (dirOut.length() < 1) dirOut.set(0, 0, 1); dirOut.normalize();
+    const az = Math.atan2(dirOut.x, dirOut.z) + 14 * Math.PI / 180;
+    return { az, el: 19 * Math.PI / 180, dist: 92, target: new V3(0, 3.2, 0) };
   }
   function buildFx(e) {
     const F = resolve(e.from), Tg = resolve(e.to);
@@ -133,8 +129,6 @@ function Stage(canvas, host) {
     const shape = e.role === 'extract' ? 'key' : e.role === 'control' ? 'bolt' : 'user';
     const fx = [];
     // 聚焦这对节点/核心
-    if (!fromCore) fx.push(['focus', 0, e.dur - 0.4, { at: e.from, col: 'def', r: 3.0, h: 5.0 }]);
-    if (!toCore) fx.push(['focus', e.dur * 0.62, e.dur - 0.4, { at: e.to, col: roleCol === 'warn' ? 'warn' : 'atk', r: 3.0, h: 5.0 }]);
     // 源:向上升起(还原/提取线索)
     fx.push(['riser', e.dur * 0.16, e.dur * 0.52, { at: fromCore ? 'coreR' : e.from, col: srcCol, y0: fTop.y, y1: fTop.y + 5 }]);
     // 暗链:源顶 → 目标顶
@@ -154,15 +148,15 @@ function Stage(canvas, host) {
     ctx.ids.src = F.isCore ? coreProxy : F; ctx.ids.dst = Tg.isCore ? coreProxy : Tg;
     const fx = buildFx(event);
     fx.forEach(e => { const f = PR[e[0]]; if (!f) { self.errors.push(event.id + ': 未知原语 ' + e[0]); return; } try { ups.push(f(ctx, e[1], e[2], e[3] || {})); } catch (err) { self.errors.push(event.id + ':' + e[0] + ':' + err.message); console.error(err); } });
-    tweenTo(framing(event.from, event.to), 1.2);
+    self.idle = false; tweenTo(framing(event.from, event.to), 1.4);
     self.dirty = true; return ctx;
   };
   self.load0 = function () { self.resetView(); }; // 总览
 
   self.draw = function (t) {
-    if (self.lost) return; updateTween(); U.uTime.value = t; glow.clear();
+    if (self.lost) return; const _n = performance.now(), _dt = Math.min(0.05, (_n - lastNow) / 1000); lastNow = _n; updateTween(); if (self.idle && !drag && !tw.on) { camS.az += _dt * 0.12; place(); } U.uTime.value = t; glow.clear();
     // 环境粒子
-    ambient.forEach(a => glow.add(a[0] + Math.sin(t * .2 * a[4] + a[3]) * .8, a[1] + Math.sin(t * .15 * a[4]) * .4, a[2] + Math.cos(t * .18 * a[4] + a[3]) * .6, 0.05, COL.def, S.day ? 0.08 : 0.12));
+    ambient.forEach(a => glow.add(a[0] + Math.sin(t * .2 * a[4] + a[3]) * .8, a[1] + Math.sin(t * .15 * a[4]) * .4, a[2] + Math.cos(t * .18 * a[4] + a[3]) * .6, 0.045, COL.def, S.day ? 0.06 : 0.09));
     // 核心动效
     coreMesh.rotation.y = t * 0.5; coreMesh.rotation.x = t * 0.25; shell.rotation.y = -t * 0.3;
     const pulse = 1 + 0.08 * Math.sin(t * 3); coreMesh.scale.setScalar(pulse);
@@ -171,7 +165,7 @@ function Stage(canvas, host) {
     sweepM.rotation.z = -t * 1.1; sweepM.material.color.copy(col('atk'));
     spokes.forEach(l => { l.material.color.copy(col('atk')); l.material.opacity = S.day ? 0.12 : 0.14 + 0.05 * Math.sin(t * 1.5); });
     for (const o of [coreEdge, shellEdge]) o.material.color.copy(col('atk'));
-    glow.add(0, 3.4, 0, 1.7 * pulse, col('atk'), 0.65);
+    glow.add(0, 3.4, 0, 1.4 * pulse, col('atk'), 0.5);
     // 节点 reset + 事件 + apply
     nodes.forEach(n => n.reset());
     for (let i = 0; i < ups.length; i++) { try { ups[i](t); } catch (err) { self.errors.push((ev ? ev.id : '') + '@' + t.toFixed(2) + ':' + err.message); ups[i] = () => {}; } }
