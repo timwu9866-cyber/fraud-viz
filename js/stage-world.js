@@ -4,7 +4,7 @@
 const S = window.SEC, T = S.T, V3 = S.V3, { COL, col, clamp, sm, eo, rng, U, Glow, Node, PR, Ctx, holoMat, addMat, lineMat, textSprite, AZ } = S;
 const W = window.FRAUD_WORLD;
   // 大场景节点多,整体降一档辉光避免发白
-  if (S.TUNE) { S.TUNE.glowA = 0.3; S.TUNE.glowS = 0.66; }
+  if (S.TUNE) { S.TUNE.glowA = 0.24; S.TUNE.glowS = 0.62; }
 const lerp = (a, b, k) => a + (b - a) * k;
 const easeIO = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 
@@ -17,7 +17,7 @@ function Stage(canvas, host) {
   });
   if (!renderer) throw lastErr || new Error('WebGL 不可用');
   self.safe = /[?&]safe=1/.test(location.search); self.lost = false;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setClearColor(0x0b1020, 1); renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.82;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); renderer.setClearColor(0x0b1020, 1); renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.76;
   const scene = new T.Scene(); scene.background = new T.Color('#0b1020');
   const cam = new T.PerspectiveCamera(46, 16 / 9, 0.5, 4000);
 
@@ -42,7 +42,7 @@ function Stage(canvas, host) {
   const grid = new T.Mesh(new T.PlaneGeometry(180, 180), new T.ShaderMaterial({
     uniforms: { uDay: { value: 0 } }, transparent: true, depthWrite: false, blending: T.AdditiveBlending,
     vertexShader: 'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float d=length(p)*0.016;float f=exp(-d*d*1.6);if(uDay>0.5){float a=clamp((l*.6+l2*.9)*f,0.,.8);gl_FragColor=vec4(vec3(.27,.32,.39),a);}else{gl_FragColor=vec4(vec3(.06,.2,.3)*(l*.09+l2*.22)*f+vec3(0.,.05,.08)*f*.02,1.);}}',
+    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float d=length(p)*0.016;float f=exp(-d*d*1.6);if(uDay>0.5){float a=clamp((l*.6+l2*.9)*f,0.,.8);gl_FragColor=vec4(vec3(.27,.32,.39),a);}else{gl_FragColor=vec4(vec3(.05,.17,.26)*(l*.07+l2*.17)*f+vec3(0.,.04,.06)*f*.02,1.);}}',
   }));
   grid.rotation.x = -Math.PI / 2; grid.position.y = -0.02; scene.add(grid);
 
@@ -53,8 +53,9 @@ function Stage(canvas, host) {
   const campLabels = [];
   W.CAMPS.forEach((camp, ci) => {
     const p = camp.pos; const g = new T.Group(); g.position.set(p.x, 0, p.z);
-    const ring = new T.Mesh(new T.RingGeometry(10.5, 11.0, 64), addMat(COL.info, 0.045, T.DoubleSide)); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.01; g.add(ring);
-    const disk = new T.Mesh(new T.CircleGeometry(10.5, 48), addMat(COL.info, 0.004, T.DoubleSide)); disk.rotation.x = -Math.PI / 2; disk.position.y = 0.005; g.add(disk);
+    const ring = new T.Mesh(new T.RingGeometry(10.5, 11.1, 6, 1), addMat(COL.info, 0.09, T.DoubleSide)); ring.rotation.x = -Math.PI / 2; ring.rotation.z = Math.PI / 6; ring.position.y = 0.01; g.add(ring);
+    const disk = new T.Mesh(new T.CircleGeometry(10.7, 6), addMat(COL.info, 0.012, T.DoubleSide)); disk.rotation.x = -Math.PI / 2; disk.rotation.z = Math.PI / 6; disk.position.y = 0.005; g.add(disk);
+    const hpts = []; for (let k = 0; k < 6; k++) { const aa = Math.PI / 6 + k * Math.PI / 3; hpts.push(new V3(Math.cos(aa) * 9.2, 0.012, Math.sin(aa) * 9.2)); } const hx2 = new T.LineLoop(new T.BufferGeometry().setFromPoints(hpts), lineMat(COL.info, 0.14)); g.add(hx2);
     scene.add(g);
     const lab = textSprite(camp.name, { h: 1.6, color: '#9fb6e6', bg: 'rgba(9,14,32,0.6)' }); lab.position.set(p.x, 0.2, p.z + 12.5); scene.add(lab); campLabels.push({ lab, baseC: '#9fb6e6' });
   });
@@ -90,7 +91,7 @@ function Stage(canvas, host) {
   // ---- 后处理 ----
   let composer = null, bloom = { strength: 0.2, threshold: 0.78 };
   try { composer = new T.EffectComposer(renderer); composer.addPass(new T.RenderPass(scene, cam)); bloom = new T.UnrealBloomPass(new T.Vector2(960, 540), 0.045, 0.3, 0.95); composer.addPass(bloom); } catch (e) { console.error(e); composer = null; self.safe = true; }
-  self.bloomUser = 0.045; self.bloomNight = 0.95;
+  self.bloomUser = 0.0; self.bloomNight = 0.95;
   self.setBloom = v => { self.bloomUser = v; bloom.strength = (S.day ? 0.5 : 1) * v; };
   self.applyTheme = function (theme) {
     const day = theme === 'light'; S.day = day; const pal = S.paintPalette(day ? 'light' : 'dark');
