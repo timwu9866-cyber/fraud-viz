@@ -24,7 +24,7 @@ function init() {
   $('scrub').oninput = () => { ST.t = $('scrub').value / 100; ST.playing = false; sync(); };
   $('speed').onchange = () => { ST.speed = +$('speed').value; };
   $('bHome').onclick = () => { ST.playing = false; ST.cur = -1; $('title').innerHTML = `<b>总览</b><span>8 阵营全景</span>`; $('cap').textContent = ''; renderList(); if (stage) stage.overview(); };
-  const bl = $('bloom'); bl.value = 28; const setB = () => { stage && stage.setBloom(bl.value / 100); $('bloomV').textContent = bl.value + '%'; }; bl.oninput = setB; setB();
+  const bl = $('bloom'); bl.value = 16; const setB = () => { stage && stage.setBloom(bl.value / 100); $('bloomV').textContent = bl.value + '%'; }; bl.oninput = setB; setB();
   addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT') return; const k = e.key;
     if (k === ' ') { e.preventDefault(); $('bPlay').click(); } else if (k === 'r' || k === 'R') $('bReplay').click();
