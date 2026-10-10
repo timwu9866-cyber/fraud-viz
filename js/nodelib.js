@@ -20,7 +20,7 @@ const CATS = {
 };
 /* 状态色(与事件大全语义色一致) */
 const STATE_COL = {
-  dark:  { sel: '#ffffff', atk: '#ff2a3c', def: '#22e6ff', bg: '#07090f', grid: '#1a2438' },
+  dark:  { sel: '#ffffff', atk: '#ff2a3c', def: '#22e6ff', bg: '#0b1020', grid: '#1a2438' },
   light: { sel: '#0d1626', atk: '#c4001c', def: '#007f9e', bg: '#d5dee9', grid: '#7a8799' },
 };
 /* 统一承载立方体:所有模型归一化到边长 CUBE 的包围盒(最长边=1),底面贴地、水平居中。size 仅作整体倍数。 */
@@ -184,7 +184,7 @@ const SPEC = {
   /* ===== 攻击者 / 外部(红) ===== */
   attacker: { cat: 'ext', name: '攻击者', en: 'Attacker', size: 'M', abbr: 'ATK', role: ['源'],
     use: '外部恶意行为者的抽象,事件中的发起方。',
-    look: '兜帽式尖锥身体 + 头部圆球 + 前方一块小屏。',
+    look: '坐姿兜帽黑客:卫衣躯干 + 圆肩 + 深色帽内与红色面罩线,双手搭在打开的笔记本上,屏幕红光、背面灯标;低多边形硬边。',
     parts: [P('cone', [.75, 1.4, 10], [0, .7, 0]), P('sph', [.32, 10, 8], [0, 1.55, 0]), P('cone', [.42, .45, 10], [0, 1.82, -.05]), P('box', [.7, .45, .05], [0, .7, .7], [-.3, 0, 0])], core: [0, 1.55, .3] },
   botnet: { cat: 'ext', name: '僵尸网络', en: 'Botnet', size: 'L', abbr: 'BOT', role: ['源'],
     use: '被控制的大量设备集合,常用于 DDoS 与撞库。',
@@ -192,7 +192,7 @@ const SPEC = {
     parts: [...[...Array(6).keys()].map(i => P('oct', [.25], [Math.cos(i * PI / 3) * 1.15, .6 + (i % 2) * .35, Math.sin(i * PI / 3) * 1.15])), P('sph', [.35, 10, 8], [0, 1.0, 0]), P('tor', [1.15, .02, 2 * PI], [0, .75, 0], [PI / 2, 0, 0])], core: [0, 1.0, 0] },
   c2: { cat: 'ext', name: 'C2 服务器', en: 'C2 Server', size: 'M', abbr: 'C2', role: ['源'],
     use: '恶意软件回连的指挥控制端,下发指令收集数据。',
-    look: '四棱锥格构铁塔 + 塔顶发射球 + 两道发射弧。',
+    look: '指挥服务器塔(刀片位 + 指示灯)+ 顶部碟形天线 + 两道发射弧。',
     parts: [P('cone', [.75, 2.0, 4], [0, 1.0, 0]), P('box', [.9, .04, .04], [0, .6, 0], [0, PI / 4, 0]), P('sph', [.18, 8, 6], [0, 2.15, 0]), P('tor', [.45, .025, PI * .6], [0, 2.15, 0], [0, 0, PI * .2]), P('tor', [.75, .025, PI * .6], [0, 2.15, 0], [0, 0, PI * .2])], core: [0, 2.15, 0] },
   internet: { cat: 'ext', name: '互联网', en: 'Internet', size: 'XL', abbr: 'NET', role: ['路径', '源'],
     use: '外部公共网络的抽象,内外网边界的另一侧。',
@@ -200,7 +200,7 @@ const SPEC = {
     parts: [P('sph', [1.1, 16, 10], [0, 1.25, 0]), P('tor', [1.45, .03, 2 * PI], [0, 1.25, 0], [PI / 2 - .4, 0, .3]), P('tor', [1.15, .025, 2 * PI], [0, 1.25, 0], [0, 0, 0])], core: [0, 1.25, 0] },
   insider: { cat: 'ext', name: '内部威胁', en: 'Insider Threat', size: 'M', abbr: 'INS', role: ['源'],
     use: '拥有合法权限但滥用权限的内部人员。',
-    look: '圆柱身体 + 圆头 + 胸前工牌方片(区别于兜帽攻击者)。',
+    look: '站姿西装人物:白衬衫 + 红领带 + 胸前工牌挂绳,抱着外泄的文件盒;与兜帽攻击者同一人形语言但可区分。',
     parts: [P('cyl', [.4, .5, 1.2, 12], [0, .6, 0]), P('sph', [.33, 10, 8], [0, 1.55, 0]), P('box', [.3, .38, .04], [.15, .85, .48]), P('box', [.04, .25, .02], [.15, 1.12, .48])], core: [0, 1.55, .35] },
 
   /* ===== v7 补充:对照对抗赛 32 种模型 ===== */
@@ -413,28 +413,40 @@ const RSPEC = {
   pos: [B('base', 0, 0, 0, .9, .06, .7), B('body', 0, .06, 0, .8, .18, .6), ...ROW(4, -.3, .0, x => B('port', x, .24, .1, .06, .02, .06)), C('detail', .25, .24, -.2, .1, .3, 14, null, [0, 0, PI / 2]),
     C('detail', 0, .24, -.05, .03, .2, 8), B('body', 0, .42, .02, .5, .36, .04, [-.35, 0, 0]), B('face', 0, .45, .045, .44, .3, .01, [-.35, 0, 0]), B('led', .35, .24, .3, .04, .02, .01)],
   /* ===== 外部 / 威胁(红) ===== */
-  attacker: [C('base', 0, 0, 0, .28, .03, 10),
-    /* 兜帽斗篷:锥体 + 外扩口沿 */
-    K('body', 0, .03, 0, .34, .55, 10), C('detail', 0, .48, 0, .36, .08, 10, .3),
-    /* 头与面罩 */
-    S('body', 0, .68, .02, .13), C('face', 0, .62, .08, .12, .1, 10, .14, [PI / 2 - .2, 0, 0]),
-    B('port', 0, .64, .16, .14, .06, .02, [-.15, 0, 0]),
-    S('led', -.05, .7, .16, .02), S('led', .05, .7, .16, .02),
-    /* 肩屏 / 手持终端 */
-    B('detail', .22, .32, .12, .2, .28, .04, [0, -.4, -.2]), B('face', .22, .34, .14, .16, .22, .01, [0, -.4, -.2]),
-    B('led', .22, .42, .145, .04, .02, .01, [0, -.4, -.2]),
-    /* 腰间线缆 */
-    TO('detail', 0, .28, 0, .22, .012, PI * 1.2, [PI / 2, 0, .3])],
+  /* 兜帽黑客:坐姿半身 + 打开的笔记本(屏幕红光朝向人物,背面灯标朝外),正面 +Z */
+  attacker: [B('base', 0, 0, .02, .84, .04, .8),
+    /* 卫衣躯干(上窄下宽)+ 圆肩 */
+    C('body', 0, .04, -.16, .19, .36, 8, .25), S('body', -.15, .36, -.16, .085), S('body', .15, .36, -.16, .085),
+    B('face', 0, .1, .07, .2, .09, .02), B('detail', -.035, .27, .08, .012, .1, .012), B('detail', .035, .27, .08, .012, .1, .012),
+    /* 兜帽 + 帽檐 + 深色帽内 + 红色面罩线 */
+    S('body', 0, .56, -.15, .155), TO('face', 0, .55, .012, .108, .03, PI), C('port', 0, .54, -.002, .102, .03, 10, null, [PI / 2, 0, 0]),
+    B('led', 0, .555, .018, .13, .018, .01),
+    /* 手臂:肩 → 键盘 */
+    C('body', -.15, .03, -.01, .045, .42, 6, null, [-.78, 0, 0]), C('body', .15, .03, -.01, .045, .42, 6, null, [-.78, 0, 0]),
+    B('face', -.12, .065, .16, .07, .035, .08), B('face', .12, .065, .16, .07, .035, .08),
+    /* 笔记本:底座 + 键盘 + 后倾屏幕(红光) + 背面灯标 */
+    B('detail', 0, .04, .22, .46, .025, .26), B('port', 0, .066, .2, .36, .004, .15),
+    B('detail', 0, .05, .36, .46, .32, .02, [.22, 0, 0]), B('led', 0, .07, .345, .4, .26, .006, [.22, 0, 0]),
+    B('led', 0, .18, .385, .05, .05, .006, [.22, 0, 0])],
   botnet: [S('body', 0, .45, 0, .18), TO('detail', 0, .45, 0, .36, .01, 2 * PI, [PI / 2, 0, 0]), ...ROW(6, 0, 5, (i) => O('face', Math.cos(i * PI / 3) * .38, .38, Math.sin(i * PI / 3) * .38, .09)),
     ...ROW(6, 0, 5, (i) => B('detail', Math.cos(i * PI / 3) * .2, .44, Math.sin(i * PI / 3) * .2, .2, .01, .01, [0, -i * PI / 3, 0])), S('led', 0, .64, 0, .04), C('base', 0, 0, 0, .1, .27, 8)],
-  c2: [B('base', 0, 0, 0, .6, .04, .6), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => C('body', a * .13, .04, b * .13, .015, .78, 6, null, [b * .3, 0, -a * .3])),
-    ...[.25, .5].flatMap(y => [B('detail', 0, y, .2 - y * .25, .5 - y * .5, .02, .02), B('detail', 0, y, -.2 + y * .25, .5 - y * .5, .02, .02)]), S('face', 0, .85, 0, .08), S('led', 0, .85, 0, .05),
-    TO('detail', 0, .85, 0, .16, .012, PI, [0, 0, 0]), TO('detail', 0, .85, 0, .26, .012, PI, [0, 0, 0])],
+  /* C2:指挥服务器塔 + 顶部碟形天线与发射弧 */
+  c2: [B('base', 0, 0, 0, .62, .04, .62), B('body', 0, .04, 0, .44, .5, .44), B('face', 0, .1, .225, .36, .38, .02),
+    ...ROW(4, .14, .4, y => [B('port', -.04, y, .238, .22, .03, .01), B('led', .13, y + .005, .238, .03, .02, .01)]).flat(),
+    C('detail', 0, .54, 0, .03, .14, 6), C('face', 0, .7, .02, .14, .05, 8, .04, [.5, 0, 0]), S('led', 0, .76, .07, .03),
+    TO('detail', 0, .8, .1, .16, .014, PI * .7, [-.5, 0, PI * .15]), TO('detail', 0, .82, .12, .25, .014, PI * .7, [-.5, 0, PI * .15])],
   internet: [C('base', 0, 0, 0, .18, .03, 8), C('detail', 0, .03, 0, .025, .08, 6), S('body', 0, .48, 0, .34),
     TO('face', 0, .48, 0, .35, .012, 2 * PI, [PI / 2, 0, 0]), TO('face', 0, .48, 0, .35, .012, 2 * PI, [0, 0, 0]),
     TO('detail', 0, .48, 0, .46, .014, 2 * PI, [PI / 2 + .35, .2, .25]), S('led', .42, .6, .08, .03)],
-  insider: [C('base', 0, 0, 0, .28, .04, 18), C('body', 0, .04, 0, .18, .5, 16, .22), S('body', 0, .7, 0, .14), B('face', .06, .34, .2, .12, .14, .02), B('led', .06, .44, .21, .04, .02, .01),
-    C('detail', -.24, .2, 0, .045, .3, 8), C('detail', .24, .2, 0, .045, .3, 8), B('port', 0, .54, .17, .1, .05, .02)],
+  /* 内部威胁:站姿西装人物 + 工牌 + 抱着外泄的文件盒,与攻击者同一人形语言 */
+  insider: [C('base', 0, 0, 0, .3, .04, 10),
+    B('port', -.07, .04, 0, .1, .34, .12), B('port', .07, .04, 0, .1, .34, .12),
+    C('body', 0, .38, 0, .17, .3, 8, .14), S('body', -.16, .64, 0, .08), S('body', .16, .64, 0, .08),
+    B('detail', 0, .5, .12, .08, .17, .03, [.12, 0, 0]), B('face', 0, .48, .14, .03, .15, .01, [.12, 0, 0]),
+    B('led', .09, .55, .14, .05, .065, .01, [.12, 0, 0]), B('detail', .06, .6, .13, .01, .08, .01, [.12, 0, -.35]),
+    C('detail', 0, .68, 0, .05, .05, 6), S('detail', 0, .8, 0, .1), S('port', 0, .84, -.015, .1),
+    C('body', -.2, .36, 0, .04, .28, 6, null, [0, 0, -.12]), C('body', .19, .44, .07, .04, .2, 6, null, [1.2, 0, 0]),
+    B('face', .14, .4, .19, .2, .16, .12), B('led', .14, .48, .25, .14, .012, .006)],
 
   /* ===== v7 新增 ===== */
   aggswitch: [B('base', 0, 0, 0, .74, .04, .6), ...[0, 1].flatMap(k => [B('body', 0, .05 + k * .26, 0, .7, .2, .56), B('face', 0, .08 + k * .26, .285, .64, .14, .02),
@@ -485,22 +497,14 @@ function segFor(size, prefer) {
   if (size < .18) return Math.min(p, 10);
   return Math.min(p, 12);
 }
-function roundedBoxGeo(T, w, h, d, b) {
-  b = Math.min(b || .02, Math.min(w, h, d) * .18);
-  /* 主体 + 顶面四条高光棱(低段数倒角观感),避免 12+8 全棱带来的面数膨胀 */
-  const g = new T.BoxGeometry(w, h, d);
-  const edges = [];
-  const add = (gw, gh, gd, x, y, z) => { const e = new T.BoxGeometry(gw, gh, gd); e.translate(x, y, z); edges.push(e); };
-  add(w - 2 * b, b, b, 0, h / 2 - b / 2, d / 2 - b / 2);
-  add(w - 2 * b, b, b, 0, h / 2 - b / 2, -(d / 2 - b / 2));
-  add(b, b, d - 2 * b, w / 2 - b / 2, h / 2 - b / 2, 0);
-  add(b, b, d - 2 * b, -(w / 2 - b / 2), h / 2 - b / 2, 0);
-  return mergeGeos(T, [g].concat(edges));
-}
+/* rbox:不再做自制倒角(旧实现把带 index 的 BoxGeometry 当作非索引数组拼接,生成交叉斜三角),直接用 BoxGeometry 原始顶点 */
 function atomGeo(T, a) {
+  const g0 = atomGeo0(T, a); if (a.flat && a.s !== 'box' && a.s !== 'rbox') { g0.deleteAttribute('normal'); g0.computeVertexNormals(); } return g0;
+}
+function atomGeo0(T, a) {
   let g, cy;
   if (a.s === 'box') { g = new T.BoxGeometry(a.w, a.h, a.d); cy = a.y + a.h / 2; }
-  else if (a.s === 'rbox') { g = roundedBoxGeo(T, a.w, a.h, a.d, a.b); cy = a.y + a.h / 2; }
+  else if (a.s === 'rbox') { g = new T.BoxGeometry(a.w, a.h, a.d); cy = a.y + a.h / 2; }
   else if (a.s === 'cyl') { const seg = segFor(Math.max(a.rt, a.rb) * 2, a.seg); g = new T.CylinderGeometry(a.rt, a.rb, a.h, seg, 1); cy = a.y + a.h / 2; }
   else if (a.s === 'cone') { const seg = segFor(a.rad * 2, a.seg); g = new T.ConeGeometry(a.rad, a.h, seg); cy = a.y + a.h / 2; }
   else if (a.s === 'tor') { const rs = segFor(a.R * 2, 16), ts = segFor(a.t * 2, 6); g = new T.TorusGeometry(a.R, a.t, Math.max(4, ts), Math.max(10, rs), a.arc); cy = a.y; }
@@ -510,31 +514,22 @@ function atomGeo(T, a) {
   g.translate(a.x, cy, a.z);
   return g.index ? g.toNonIndexed() : g;
 }
+/* 同角色原子拼接:每个原子先 toNonIndexed,保持各自原始顶点与硬边法线;不跨原子焊接、不平均法线 */
 function mergeGeos(T, list) {
+  list = list.map(g => g.index ? g.toNonIndexed() : g);
   let n = 0; list.forEach(g => n += g.attributes.position.count);
   const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3); let o = 0;
   list.forEach(g => { pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3); o += g.attributes.position.count; g.dispose(); });
-  const m = new T.BufferGeometry(); m.setAttribute('position', new T.BufferAttribute(pos, 3)); m.setAttribute('normal', new T.BufferAttribute(nor, 3)); return weldGeo(T, m);
-}
-/** 合并重复顶点(量化到 1e-4),同步法线平均 */
-function weldGeo(T, geo, eps) {
-  eps = eps || 1e-4; const inv = 1 / eps;
-  const P = geo.attributes.position.array, N = geo.attributes.normal.array;
-  const map = new Map(), idx = new Uint32Array(P.length / 3);
-  const pos = [], nor = []; let nV = 0;
-  for (let i = 0; i < P.length; i += 3) {
-    const key = (Math.round(P[i] * inv)) + ',' + (Math.round(P[i + 1] * inv)) + ',' + (Math.round(P[i + 2] * inv));
-    let id = map.get(key);
-    if (id == null) { id = nV++; map.set(key, id); pos.push(P[i], P[i + 1], P[i + 2]); nor.push(N[i], N[i + 1], N[i + 2]); }
-    else { nor[id * 3] += N[i]; nor[id * 3 + 1] += N[i + 1]; nor[id * 3 + 2] += N[i + 2]; }
-    idx[i / 3] = id;
+  /* 剔除零面积三角(球/锥极点处) */
+  const kp = [], kn = [];
+  for (let t = 0; t < n; t += 3) {
+    const i = t * 3, ax = pos[i], ay = pos[i + 1], az = pos[i + 2];
+    const ux = pos[i + 3] - ax, uy = pos[i + 4] - ay, uz = pos[i + 5] - az, vx = pos[i + 6] - ax, vy = pos[i + 7] - ay, vz = pos[i + 8] - az;
+    const cx = uy * vz - uz * vy, cy = uz * vx - ux * vz, cz = ux * vy - uy * vx;
+    if (cx * cx + cy * cy + cz * cz < 4e-16) continue;
+    for (let j = 0; j < 9; j++) { kp.push(pos[i + j]); kn.push(nor[i + j]); }
   }
-  for (let i = 0; i < nor.length; i += 3) { const l = Math.hypot(nor[i], nor[i + 1], nor[i + 2]) || 1; nor[i] /= l; nor[i + 1] /= l; nor[i + 2] /= l; }
-  const m = new T.BufferGeometry();
-  m.setAttribute('position', new T.Float32BufferAttribute(pos, 3));
-  m.setAttribute('normal', new T.Float32BufferAttribute(nor, 3));
-  m.setIndex(Array.from(idx));
-  geo.dispose(); return m;
+  const m = new T.BufferGeometry(); m.setAttribute('position', new T.Float32BufferAttribute(kp, 3)); m.setAttribute('normal', new T.Float32BufferAttribute(kn, 3)); return m;
 }
 /** 近似 AO:凹处/底面/朝下法线变暗,写入 aAo attribute */
 function bakeAO(geo, role) {
@@ -555,7 +550,7 @@ const GCACHE = {};
 /* 构建并归一化到 CUBE 立方体(最长边=CUBE,底面 y=0,水平居中),按角色合并 */
 function buildModel(T, type) {
   if (GCACHE[type]) return GCACHE[type];
-  const atoms = RSPEC[type].flat(), geos = atoms.map(a => ({ r: a.r, g: atomGeo(T, a) }));
+  const atoms = RSPEC[type].flat().map(a => SPEC[type] && SPEC[type].cat === 'ext' ? Object.assign({ flat: true }, a) : a), geos = atoms.map(a => ({ r: a.r, g: atomGeo(T, a) }));
   const bb = new T.Box3(); geos.forEach(x => { x.g.computeBoundingBox(); bb.union(x.g.boundingBox); });
   const raw = bb.getSize(new T.Vector3()), k = CUBE / Math.max(raw.x, raw.y, raw.z);
   const cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2, y0 = bb.min.y;
@@ -579,7 +574,7 @@ const ROLE_FIX = { dark: { base: '#556578', port: '#3a4860', detail: '#a8b6c8' }
 const ROLE_K = { dark: { body: .78, face: 1.0, rim: { body: .22, face: .14, base: .08, port: .04, led: 0, detail: .12 }, spec: { body: .18, face: .22, base: .06, port: .04, led: 0, detail: .12 }, shin: { body: 28, face: 36, base: 16, port: 20, led: 1, detail: 24 } }, light: { body: .88, face: 1.0, rim: { body: .12, face: .08, base: .04, port: .03, led: 0, detail: .07 }, spec: { body: .12, face: .14, base: .04, port: .03, led: 0, detail: .08 }, shin: { body: 32, face: 40, base: 18, port: 22, led: 1, detail: 28 } } };
 function roleColor(T, main, role, theme) {
   const F = ROLE_FIX[theme]; if (F[role]) return new T.Color(F[role]);
-  if (role === 'led') return main.clone().lerp(new T.Color('#ffffff'), .55);
+  if (role === 'led') { const hot = main.r > main.g * 2 && main.r > main.b * 2; return main.clone().lerp(new T.Color(hot ? '#ffb0b0' : '#ffffff'), hot ? .25 : .55); }
   return main.clone().multiplyScalar(ROLE_K[theme][role]);
 }
 function hemiColors(theme) {
@@ -594,7 +589,9 @@ function devMat(T, main, role, theme) {
     uFill: { value: theme === 'light' ? .78 : .80 },
     uSpec: { value: K.spec[role] * .75 }, uShin: { value: K.shin[role] },
     uHemiSky: { value: H.sky }, uHemiGnd: { value: H.gnd },
-  }, vertexShader: VS_DEV, fragmentShader: FS_DEV });
+  }, vertexShader: VS_DEV, fragmentShader: FS_DEV,
+  /* 贴在面板上的细部与面板共面,深度偏移防 z-fighting(不改几何) */
+  polygonOffset: true, polygonOffsetFactor: { body: 0, base: 1, face: -1, detail: -2, port: -3, led: -4 }[role] || 0, polygonOffsetUnits: { body: 0, base: 1, face: -1, detail: -2, port: -3, led: -4 }[role] || 0 });
 }
 /** 脚下柔和接触阴影(径向渐变贴片,非发光底座) */
 function contactShadow(T, theme, size) {
@@ -830,6 +827,7 @@ function setupBloom(renderer, opts) {
 }
 
 const api = { version: 8, CATS, SPEC, RSPEC, ROLES, buildModel, CUBE, SIZES, STATES, STATE_COL, FRAME, ZONE, createNode, createZone, createZoneLabel, createLink, fitLabels, addLights, setupBloom, markBloom, prepareRenderer, setTheme, get theme() { return THEME; }, types: () => Object.keys(SPEC), byCat: c => Object.keys(SPEC).filter(k => SPEC[k].cat === c) };
+api._debug = { RSPEC, atomGeo, buildModel };
 root.NODELIB = api;
 if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
