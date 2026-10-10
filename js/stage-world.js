@@ -90,9 +90,29 @@ function Stage(canvas, host) {
 
   // ---- 世界节点 ----
   const nodeMap = {}; const nodes = [];
-  W.NODES.forEach(nd => { const n = new Node({ label: nd.label, kind: nd.kind, color: nd.c, x: nd.x, z: nd.z, scale: (nd.scale || 1) * 1.45, dir: 1 }); n.add(scene); nodeMap[nd.id] = n; n._def = nd; nodes.push(n);
-    // 大场景节点多,收一档各节点的发光材质,避免叠加泛白
+  // 平时:实心设备模型(复用通用网络安全节点库);事件触发时才把发光方盒套上
+  const KIND2TYPE = { phone: 'mobile', server: 'websrv', db: 'dbsrv', client: 'pc', net: 'router', iot: 'c2', cloud: 'cloud' };
+  const TYPE_OVR = { s5_video: 'ipcam', s6_goip: 'router', s7_rat: 'c2', s2_site: 'websrv', s8_code: 'cloud' };
+  const MODEL_SCALE = 4.6; const modelMap = {};
+  if (window.NODELIB) { try { NODELIB.addLights(scene, 'dark'); } catch (e) { self.errors.push('lights:' + e.message); } }
+  W.NODES.forEach(nd => {
+    const n = new Node({ label: nd.label, kind: nd.kind, color: nd.c, x: nd.x, z: nd.z, scale: (nd.scale || 1) * 1.45, dir: 1 }); n.add(scene); nodeMap[nd.id] = n; n._def = nd; nodes.push(n);
+    n.g.visible = false; // 默认隐藏发光方盒,事件触发时才显示
+    // 实心设备模型
+    if (window.NODELIB) { try {
+      const type = TYPE_OVR[nd.id] || KIND2TYPE[nd.kind] || 'websrv';
+      const m = NODELIB.createNode(type, { theme: 'dark', size: 1, label: nd.label });
+      m.group.position.set(nd.x, 0, nd.z); m.group.rotation.y = Math.atan2(-nd.x, -nd.z);
+      m.group.scale.setScalar(MODEL_SCALE); scene.add(m.group); modelMap[nd.id] = m;
+    } catch (e) { self.errors.push('model ' + nd.id + ':' + e.message); } }
   });
+  // 事件激活:隐藏这两个节点的实心模型,显示发光方盒(套上);其余恢复
+  let activeIds = [];
+  function setActive(ids) {
+    activeIds.forEach(id => { if (modelMap[id]) modelMap[id].group.visible = true; if (nodeMap[id]) nodeMap[id].g.visible = false; });
+    activeIds = (ids || []).filter(Boolean);
+    activeIds.forEach(id => { if (modelMap[id]) modelMap[id].group.visible = false; if (nodeMap[id]) nodeMap[id].g.visible = true; });
+  }
   function resolve(id) { if (id === 'core') return coreProxy; return nodeMap[id]; }
 
   // ---- 后处理 ----
@@ -123,7 +143,7 @@ function Stage(canvas, host) {
   canvas.addEventListener('pointermove', e => { if (!drag) return; camS.az -= (e.clientX - drag.x) * 0.006; camS.el = clamp(camS.el + (e.clientY - drag.y) * 0.005, 0.12, 1.45); drag.x = e.clientX; drag.y = e.clientY; place(); self.dirty = true; });
   const up = e => { drag = null; }; canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
   canvas.addEventListener('wheel', e => { e.preventDefault(); camS.dist = clamp(camS.dist * Math.exp(e.deltaY * 0.0012), 26, 160); tw.on = false; place(); self.dirty = true; }, { passive: false });
-  self.resetView = () => { self.idle = true; tweenTo({ az: camS.az, el: 24 * Math.PI / 180, dist: 100, target: new V3(0, 3.0, 0) }, 1.1); };
+  self.resetView = () => { if (typeof setActive === 'function') setActive([]); self.idle = true; tweenTo({ az: camS.az, el: 24 * Math.PI / 180, dist: 100, target: new V3(0, 3.0, 0) }, 1.1); };
   self.overview = self.resetView;
 
   // ---- 事件加载 ----
@@ -164,6 +184,7 @@ function Stage(canvas, host) {
     ctx.ids.src = F.isCore ? coreProxy : F; ctx.ids.dst = Tg.isCore ? coreProxy : Tg;
     const fx = buildFx(event);
     fx.forEach(e => { const f = PR[e[0]]; if (!f) { self.errors.push(event.id + ': 未知原语 ' + e[0]); return; } try { ups.push(f(ctx, e[1], e[2], e[3] || {})); } catch (err) { self.errors.push(event.id + ':' + e[0] + ':' + err.message); console.error(err); } });
+    setActive([event.from, event.to]);
     self.idle = false; tweenTo(framing(event.from, event.to), 1.4);
     self.dirty = true; return ctx;
   };
@@ -183,7 +204,8 @@ function Stage(canvas, host) {
     for (const o of [coreEdge, shellEdge]) o.material.color.copy(col('atk'));
     glow.add(0, 3.4, 0, 1.4 * pulse, col('atk'), 0.5);
     // 节点 reset + 事件 + apply
-    nodes.forEach(n => n.reset());
+    if (window.NODELIB) { for (const k in modelMap) { try { modelMap[k].update(t); } catch (e) {} } }
+    nodes.forEach(n => { n.reset(); n.vis = (activeIds.indexOf(n._def.id) >= 0) ? 1 : 0; });
     for (let i = 0; i < ups.length; i++) { try { ups[i](t); } catch (err) { self.errors.push((ev ? ev.id : '') + '@' + t.toFixed(2) + ':' + err.message); ups[i] = () => {}; } }
     nodes.forEach(n => n.apply(t));
     glow.flush();
