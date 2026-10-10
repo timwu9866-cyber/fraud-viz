@@ -83,7 +83,7 @@ function Stage(canvas, host) {
   const coreMat = holoMat('#ff4d5e', { base: 0.04, rim: 0.55, pow: 1.8, scan: 0.04, glow: 0.55 });
   const coreMesh = new T.Mesh(new T.IcosahedronGeometry(2.4, 0), coreMat); coreMesh.position.y = 3.4; coreMesh.visible = false; core.add(coreMesh);
   const coreEdge = new T.LineSegments(new T.EdgesGeometry(new T.IcosahedronGeometry(2.4, 0)), lineMat(col('atk'), 0.8)); coreEdge.position.y = 3.4; core.add(coreEdge);
-  const shellMat = holoMat('#ff4d5e', { base: 0.02, rim: 0.4, pow: 2.6, scan: 0.08, glow: 0.8 });
+  const shellMat = holoMat('#ff4d5e', { base: 0.015, rim: 0.3, pow: 2.8, scan: 0.06, glow: 0.35 });
   const shell = new T.Mesh(new T.OctahedronGeometry(4.2, 0), shellMat); shell.position.y = 3.4; core.add(shell);
   const shellEdge = new T.LineSegments(new T.EdgesGeometry(new T.OctahedronGeometry(4.2, 0)), lineMat(col('atk'), 0.35)); shellEdge.position.y = 3.4; core.add(shellEdge);
   // 核心内部:大脑造型(两瓣 + 脑沟凸起,受场景灯光)
@@ -97,12 +97,16 @@ function Stage(canvas, host) {
       geo.setAttribute('position', new T.BufferAttribute(pos, 3));
       geo.setIndex(new T.BufferAttribute(idx, 1));
       geo.computeVertexNormals();
-      const mat = new T.MeshStandardMaterial({ color: new T.Color('#f3b8c6'), emissive: new T.Color('#b83a52'), emissiveIntensity: 0.3, roughness: 0.62, metalness: 0.05 });
-      const mesh = new T.Mesh(geo, mat); mesh.scale.setScalar(4.6); brain.add(mesh); brain.userData.mesh = mesh;
+      // 全息:半透明实体(普通混合,避免叠加泛白) + 发光线框
+      const mat = new T.MeshBasicMaterial({ color: new T.Color('#ff6f8f'), transparent: true, opacity: 0.2, depthWrite: false, side: T.DoubleSide });
+      const mesh = new T.Mesh(geo, mat); mesh.scale.setScalar(4.6); brain.add(mesh);
+      const wf = new T.LineSegments(new T.EdgesGeometry(geo, 24), new T.LineBasicMaterial({ color: new T.Color('#ffb3c6'), transparent: true, opacity: 0.55, depthWrite: false }));
+      wf.scale.setScalar(4.6); brain.add(wf);
+      brain.userData.mesh = mesh; brain.userData.wf = wf;
     } catch (e) { self.errors.push('brain:' + e.message); }
   })();
   // 脚下雷达环(多层)
-  const radar = []; for (let i = 0; i < 3; i++) { const m = new T.Mesh(new T.RingGeometry(3 + i * 1.6, 3.2 + i * 1.6, 72), addMat(col('atk'), 0.4, T.DoubleSide)); m.rotation.x = -Math.PI / 2; m.position.y = 0.05; core.add(m); radar.push(m); }
+  const radar = []; for (let i = 0; i < 3; i++) { const m = new T.Mesh(new T.RingGeometry(3 + i * 1.6, 3.2 + i * 1.6, 72), addMat(col('atk'), 0.28, T.DoubleSide)); m.rotation.x = -Math.PI / 2; m.position.y = 0.05; core.add(m); radar.push(m); }
   const sweepM = new T.Mesh(new T.RingGeometry(3, 8, 64, 1, 0, Math.PI * 0.5), addMat(col('atk'), 0.16, T.DoubleSide)); sweepM.rotation.x = -Math.PI / 2; sweepM.position.y = 0.06; core.add(sweepM);
   // 向 8 阵营放射的"攻击源"连线(常驻、低亮)
   const spokes = []; W.CAMPS.forEach(camp => {
@@ -227,7 +231,7 @@ function Stage(canvas, host) {
     sweepM.rotation.z = -t * 1.1; sweepM.material.color.copy(col('atk'));
     spokes.forEach(l => { l.material.color.copy(col('atk')); l.material.opacity = S.day ? 0.12 : 0.14 + 0.05 * Math.sin(t * 1.5); });
     for (const o of [coreEdge, shellEdge]) o.material.color.copy(col('atk'));
-    glow.add(0, 3.4, 0, 1.4 * pulse, col('atk'), 0.5);
+    glow.add(0, 5.1, 0, 0.5 * pulse, col('atk'), 0.22);
     // 节点 reset + 事件 + apply
     if (window.NODELIB) { for (const k in modelMap) { try { modelMap[k].update(t); } catch (e) {} } }
     nodes.forEach(n => { n.reset(); n.vis = (activeIds.indexOf(n._def.id) >= 0) ? 1 : 0; });
