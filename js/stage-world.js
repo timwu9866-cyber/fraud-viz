@@ -87,16 +87,20 @@ function Stage(canvas, host) {
   const shell = new T.Mesh(new T.OctahedronGeometry(4.2, 0), shellMat); shell.position.y = 3.4; core.add(shell);
   const shellEdge = new T.LineSegments(new T.EdgesGeometry(new T.OctahedronGeometry(4.2, 0)), lineMat(col('atk'), 0.35)); shellEdge.position.y = 3.4; core.add(shellEdge);
   // 核心内部:大脑造型(两瓣 + 脑沟凸起,受场景灯光)
-  const brain = new T.Group(); brain.position.y = 3.4; brain.scale.setScalar(2.05); core.add(brain);
-  const brainMat = new T.MeshStandardMaterial({ color: new T.Color('#f2b4c0'), emissive: new T.Color('#c03048'), emissiveIntensity: 0.35, roughness: 0.65, metalness: 0.05 });
-  const lobeGeo = new T.SphereGeometry(0.95, 24, 18);
-  const lobeL = new T.Mesh(lobeGeo, brainMat); lobeL.position.set(-0.48, 0.05, 0); lobeL.scale.set(1.05, 0.9, 1.22); brain.add(lobeL);
-  const lobeR = new T.Mesh(lobeGeo, brainMat); lobeR.position.set(0.48, 0.05, 0); lobeR.scale.set(1.05, 0.9, 1.22); brain.add(lobeR);
-  const brainRng = rng(21); const gyri = [];
-  for (let i = 0; i < 32; i++) { const th = brainRng() * Math.PI * 2, ph = Math.acos(2 * brainRng() - 1); const rr = 0.88; const side = brainRng() > 0.5 ? 0.48 : -0.48;
-    const bx = side + rr * Math.sin(ph) * Math.cos(th), by = 0.05 + rr * 0.9 * Math.cos(ph), bz = rr * 1.22 * Math.sin(ph) * Math.sin(th);
-    const b = new T.Mesh(new T.SphereGeometry(0.18 + brainRng() * 0.12, 8, 6), brainMat); b.position.set(bx, by, bz); brain.add(b); gyri.push(b); }
-  const sulcus = new T.Mesh(new T.BoxGeometry(0.08, 1.6, 2.5), new T.MeshStandardMaterial({ color: new T.Color('#8a2a3c'), roughness: 0.85, emissive: new T.Color('#3a0810'), emissiveIntensity: 0.3 })); brain.add(sulcus);
+  const brain = new T.Group(); brain.position.y = 3.4; core.add(brain);
+  (function(){
+    try {
+      const BR = S.BRAIN; if (!BR) throw new Error('no BRAIN');
+      const b64 = (str, Ctor) => { const bin = atob(str); const len = bin.length; const bytes = new Uint8Array(len); for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i); return new Ctor(bytes.buffer); };
+      const pos = b64(BR.pos, Float32Array), idx = b64(BR.idx, Uint32Array);
+      const geo = new T.BufferGeometry();
+      geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+      geo.setIndex(new T.BufferAttribute(idx, 1));
+      geo.computeVertexNormals();
+      const mat = new T.MeshStandardMaterial({ color: new T.Color('#f3b8c6'), emissive: new T.Color('#b83a52'), emissiveIntensity: 0.3, roughness: 0.62, metalness: 0.05 });
+      const mesh = new T.Mesh(geo, mat); mesh.scale.setScalar(4.6); brain.add(mesh); brain.userData.mesh = mesh;
+    } catch (e) { self.errors.push('brain:' + e.message); }
+  })();
   // 脚下雷达环(多层)
   const radar = []; for (let i = 0; i < 3; i++) { const m = new T.Mesh(new T.RingGeometry(3 + i * 1.6, 3.2 + i * 1.6, 72), addMat(col('atk'), 0.4, T.DoubleSide)); m.rotation.x = -Math.PI / 2; m.position.y = 0.05; core.add(m); radar.push(m); }
   const sweepM = new T.Mesh(new T.RingGeometry(3, 8, 64, 1, 0, Math.PI * 0.5), addMat(col('atk'), 0.16, T.DoubleSide)); sweepM.rotation.x = -Math.PI / 2; sweepM.position.y = 0.06; core.add(sweepM);
