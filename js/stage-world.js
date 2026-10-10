@@ -42,9 +42,18 @@ function Stage(canvas, host) {
   const grid = new T.Mesh(new T.PlaneGeometry(180, 180), new T.ShaderMaterial({
     uniforms: { uDay: { value: 0 } }, transparent: true, depthWrite: false, blending: T.AdditiveBlending,
     vertexShader: 'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float d=length(p)*0.016;float f=exp(-d*d*1.6);if(uDay>0.5){float a=clamp((l*.6+l2*.9)*f,0.,.8);gl_FragColor=vec4(vec3(.27,.32,.39),a);}else{gl_FragColor=vec4(vec3(.04,.13,.2)*(l*.05+l2*.13)*f,1.);}}',
+    fragmentShader: 'varying vec3 vW;uniform float uDay;void main(){vec2 p=vW.xz;vec2 g=abs(fract(p-.5)-.5)/fwidth(p);float l=1.-min(min(g.x,g.y),1.);vec2 g2=abs(fract(p/5.-.5)-.5)/fwidth(p/5.);float l2=1.-min(min(g2.x,g2.y),1.);float r=length(p);if(uDay>0.5){float f=exp(-r*r*0.00045);float a=clamp((l*.5+l2*.9)*f,0.,.7);gl_FragColor=vec4(vec3(.24,.42,.6),a);}else{float fade=exp(-r*r*0.0011);float grid=(l*0.42+l2*1.0)*fade;float disc=exp(-r*r*0.004)*0.22;vec3 cyan=vec3(0.16,0.60,1.0);vec3 c=cyan*grid*1.15+cyan*disc;gl_FragColor=vec4(c,1.);}}',
   }));
   grid.rotation.x = -Math.PI / 2; grid.position.y = -0.02; scene.add(grid);
+
+  // ---- 背景天空穹顶(还原 U3D:深藏青顶 + 地平线微亮) ----
+  const sky = new T.Mesh(new T.SphereGeometry(520, 32, 16), new T.ShaderMaterial({
+    side: T.BackSide, depthWrite: false, fog: false,
+    uniforms: { uTop: { value: new T.Color('#05080f') }, uHor: { value: new T.Color('#101d28') }, uBot: { value: new T.Color('#03060b') }, uDay: { value: 0 } },
+    vertexShader: 'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader: 'varying vec3 vP;uniform vec3 uTop;uniform vec3 uHor;uniform vec3 uBot;uniform float uDay;void main(){float h=normalize(vP).y;vec3 c;if(h>=0.0){c=mix(uHor,uTop,pow(clamp(h,0.,1.),0.55));}else{c=mix(uHor,uBot,pow(clamp(-h,0.,1.),0.6));}if(uDay>0.5)c=mix(c,vec3(.52,.6,.72),0.72);gl_FragColor=vec4(c,1.);}',
+  }));
+  sky.renderOrder = -10; scene.add(sky);
 
   const glow = new Glow(26000); scene.add(glow.points);
   const ambient = []; { const r = rng(7); for (let i = 0; i < 14; i++) ambient.push([(r() - .5) * 80, r() * 5, (r() - .5) * 80, r() * 6.28, 0.4 + r() * 0.8]); }
@@ -96,7 +105,7 @@ function Stage(canvas, host) {
   self.setBloom = v => { self.bloomUser = v; bloom.strength = (S.day ? 0.5 : 1) * v; };
   self.applyTheme = function (theme) {
     const day = theme === 'light'; S.day = day; const pal = S.paintPalette(day ? 'light' : 'dark');
-    scene.background.set(pal.bg); renderer.setClearColor(pal.bg, 1);
+    scene.background.set(pal.bg); renderer.setClearColor(pal.bg, 1); if (sky) sky.material.uniforms.uDay.value = day ? 1 : 0;
     grid.material.uniforms.uDay.value = day ? 1 : 0; grid.material.blending = day ? T.NormalBlending : T.AdditiveBlending; grid.material.needsUpdate = true;
     glow.points.material.uniforms.uDay.value = day ? 1 : 0; glow.points.material.blending = day ? T.NormalBlending : T.AdditiveBlending; glow.points.material.needsUpdate = true;
     if (bloom.threshold != null) bloom.threshold = day ? 0.92 : self.bloomNight; bloom.strength = (day ? 0.5 : 1) * self.bloomUser;
