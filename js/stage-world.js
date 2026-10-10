@@ -66,17 +66,30 @@ function Stage(canvas, host) {
     const disk = new T.Mesh(new T.CircleGeometry(10.7, 6), addMat(COL.info, 0.012, T.DoubleSide)); disk.rotation.x = -Math.PI / 2; disk.rotation.z = Math.PI / 6; disk.position.y = 0.005; g.add(disk);
     const hpts = []; for (let k = 0; k < 6; k++) { const aa = Math.PI / 6 + k * Math.PI / 3; hpts.push(new V3(Math.cos(aa) * 9.2, 0.012, Math.sin(aa) * 9.2)); } const hx2 = new T.LineLoop(new T.BufferGeometry().setFromPoints(hpts), lineMat(COL.info, 0.14)); g.add(hx2);
     scene.add(g);
-    const lab = textSprite(camp.name, { h: 1.6, color: '#9fb6e6', bg: 'rgba(9,14,32,0.6)' }); lab.position.set(p.x, 0.2, p.z + 12.5); scene.add(lab); campLabels.push({ lab, baseC: '#9fb6e6' });
+    const lab = textSprite(camp.name, { h: 1.6, color: '#9fb6e6', bg: 'rgba(9,14,32,0.6)' }); lab.position.set(p.x + Math.cos(p.a) * 11.2, 0.6, p.z + Math.sin(p.a) * 11.2); scene.add(lab); campLabels.push({ lab, baseC: '#9fb6e6' });
   });
 
   // ---- 中央攻击源核心(反诈特征:红核 + 骷髅/警示 + 雷达环 + 盾形外罩) ----
-  const core = new T.Group(); scene.add(core);
+  const core = new T.Group(); core.scale.setScalar(1.5); scene.add(core);
   const coreMat = holoMat('#ff4d5e', { base: 0.2, rim: 0.6, pow: 1.5, scan: 0.05, glow: 0.9 });
   const coreMesh = new T.Mesh(new T.IcosahedronGeometry(2.4, 0), coreMat); coreMesh.position.y = 3.4; core.add(coreMesh);
   const coreEdge = new T.LineSegments(new T.EdgesGeometry(new T.IcosahedronGeometry(2.4, 0)), lineMat(col('atk'), 0.8)); coreEdge.position.y = 3.4; core.add(coreEdge);
   const shellMat = holoMat('#ff4d5e', { base: 0.02, rim: 0.4, pow: 2.6, scan: 0.08, glow: 0.8 });
   const shell = new T.Mesh(new T.OctahedronGeometry(4.2, 0), shellMat); shell.position.y = 3.4; core.add(shell);
   const shellEdge = new T.LineSegments(new T.EdgesGeometry(new T.OctahedronGeometry(4.2, 0)), lineMat(col('atk'), 0.35)); shellEdge.position.y = 3.4; core.add(shellEdge);
+  // 核心内部:大脑造型(两瓣 + 脑沟凸起,受场景灯光)
+  const brain = new T.Group(); brain.position.y = 3.4; core.add(brain);
+  const brainMat = new T.MeshStandardMaterial({ color: new T.Color('#f0a6b8'), emissive: new T.Color('#5a1020'), emissiveIntensity: 0.5, roughness: 0.78, metalness: 0.05 });
+  const lobeGeo = new T.SphereGeometry(0.92, 20, 16);
+  const lobeL = new T.Mesh(lobeGeo, brainMat); lobeL.position.set(-0.42, 0, 0); lobeL.scale.set(1, 0.86, 1.18); brain.add(lobeL);
+  const lobeR = new T.Mesh(lobeGeo, brainMat); lobeR.position.set(0.42, 0, 0); lobeR.scale.set(1, 0.86, 1.18); brain.add(lobeR);
+  // 脑回凸起(沿表面散布的小球)
+  const brainRng = rng(21); const gyri = [];
+  for (let i = 0; i < 26; i++) { const th = brainRng() * Math.PI * 2, ph = Math.acos(2 * brainRng() - 1); const rr = 0.82; const side = brainRng() > 0.5 ? 0.42 : -0.42;
+    const bx = side + rr * Math.sin(ph) * Math.cos(th), by = rr * 0.86 * Math.cos(ph), bz = rr * 1.18 * Math.sin(ph) * Math.sin(th);
+    const b = new T.Mesh(new T.SphereGeometry(0.16 + brainRng() * 0.1, 8, 6), brainMat); b.position.set(bx, by, bz); brain.add(b); gyri.push(b); }
+  // 中央脑沟(暗色薄片)
+  const sulcus = new T.Mesh(new T.BoxGeometry(0.06, 1.5, 2.3), new T.MeshStandardMaterial({ color: new T.Color('#7a3344'), roughness: 0.9 })); brain.add(sulcus);
   // 脚下雷达环(多层)
   const radar = []; for (let i = 0; i < 3; i++) { const m = new T.Mesh(new T.RingGeometry(3 + i * 1.6, 3.2 + i * 1.6, 72), addMat(col('atk'), 0.4, T.DoubleSide)); m.rotation.x = -Math.PI / 2; m.position.y = 0.05; core.add(m); radar.push(m); }
   const sweepM = new T.Mesh(new T.RingGeometry(3, 8, 64, 1, 0, Math.PI * 0.5), addMat(col('atk'), 0.16, T.DoubleSide)); sweepM.rotation.x = -Math.PI / 2; sweepM.position.y = 0.06; core.add(sweepM);
@@ -103,7 +116,7 @@ function Stage(canvas, host) {
       const type = TYPE_OVR[nd.id] || KIND2TYPE[nd.kind] || 'websrv';
       const m = NODELIB.createNode(type, { theme: 'dark', size: 1, label: nd.label });
       m.group.position.set(nd.x, 0, nd.z); m.group.rotation.y = Math.atan2(-nd.x, -nd.z);
-      m.group.scale.setScalar(MODEL_SCALE); scene.add(m.group); modelMap[nd.id] = m;
+      m.group.scale.setScalar(MODEL_SCALE); m.group.traverse(o => { if (o.isSprite) { o.scale.multiplyScalar(0.5); o.position.y *= 0.9; } }); scene.add(m.group); modelMap[nd.id] = m;
     } catch (e) { self.errors.push('model ' + nd.id + ':' + e.message); } }
   });
   // 事件激活:隐藏这两个节点的实心模型,显示发光方盒(套上);其余恢复
@@ -196,7 +209,7 @@ function Stage(canvas, host) {
     ambient.forEach(a => glow.add(a[0] + Math.sin(t * .2 * a[4] + a[3]) * .8, a[1] + Math.sin(t * .15 * a[4]) * .4, a[2] + Math.cos(t * .18 * a[4] + a[3]) * .6, 0.04, COL.def, S.day ? 0.05 : 0.06));
     // 核心动效
     coreMesh.rotation.y = t * 0.5; coreMesh.rotation.x = t * 0.25; shell.rotation.y = -t * 0.3;
-    const pulse = 1 + 0.08 * Math.sin(t * 3); coreMesh.scale.setScalar(pulse);
+    const pulse = 1 + 0.08 * Math.sin(t * 3); coreMesh.scale.setScalar(pulse); brain.rotation.y = t * 0.3;
     coreMat.uniforms.uColor.value.copy(col('atk')); shellMat.uniforms.uColor.value.copy(col('atk'));
     radar.forEach((m, i) => { m.material.color.copy(col('atk')); m.material.opacity = (0.22 - i * 0.05) * (0.6 + 0.4 * Math.sin(t * 2 - i)); });
     sweepM.rotation.z = -t * 1.1; sweepM.material.color.copy(col('atk'));
